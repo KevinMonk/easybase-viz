@@ -83,7 +83,26 @@ await base.ready()
 const swarm = new Hyperswarm({
   keyPair: base.local.keyPair
 })
-swarm.on('connection', c => base.replicate(c))
+swarm.on('connection', c => {
+  base.replicate(c)
+
+  // WARNING: Auto-add writers - only for testing!
+  // This automatically trusts ALL connecting peers
+  const peerKey = c.remotePublicKey.toString('hex')
+  console.log('New peer connected:', peerKey)
+
+  // Only add if we're writable and peer isn't already a writer
+  if (base.writable) {
+    const isAlreadyWriter = base.linearizer.indexers.some(w => {
+      return w && w.key && w.key.toString('hex') === peerKey
+    })
+
+    if (!isAlreadyWriter) {
+      console.log('Auto-adding peer as writer:', peerKey)
+      base.append(JSON.stringify({ add: peerKey }))
+    }
+  }
+})
 swarm.join(base.discoveryKey)
 
 Pear.teardown(() => swarm.destroy())
@@ -115,8 +134,6 @@ if (base.writable) {
 
 async function onwritable () {
   console.log('we are writable!')
-
-  // await base.append(JSON.stringify({ add: flags.add }))
 
   if (pace) {
     while (true) {

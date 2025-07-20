@@ -21,8 +21,10 @@
     "pear-interface": "^1.0.0"
   },
   "dependencies": {
+    "autobase": "^7.15.0",
     "b4a": "^1.6.7",
     "bare-process": "^4.2.1",
+    "corestore": "^7.4.5",
     "hypercore-crypto": "^3.6.1",
     "hyperswarm": "^4.12.1"
   }

@@ -1,11 +1,10 @@
 /** @typedef {import('pear-interface')} */ /* global Pear */
 document.querySelector('h1').addEventListener('click', (e) => { e.target.innerHTML = '🍐' })
 
-import Hyperswarm from 'hyperswarm'
-import crypto from 'hypercore-crypto'
-import b4a from 'b4a'
-import Corestore from 'corestore'
 import Autobase from 'autobase'
+import Corestore from 'corestore'
+import Hyperswarm from 'hyperswarm'
+import b4a from 'b4a'
 
 class View {
   open (store) {
@@ -44,76 +43,54 @@ class View {
   }
 }
 
-// const swarm = new Hyperswarm()
-Pear.teardown(() => swarm.destroy())
+// Parse Pear desktop app arguments
+// Usage examples:
+//   pear run . alice --swarm                    # Start alice with swarm
+//   pear run . bob --swarm --add=<writer-key>   # Start bob and add a writer
+//   pear run . alice --spam=10                  # Spam 10 messages per second
+// Flags are passed with --flag=value or --flag (for boolean)
+const args = Pear.config.args || []
 
-// // Keep track of all connections and console.log incoming data
-// const conns = []
-// swarm.on('connection', conn => {
-//   const name = b4a.toString(conn.remotePublicKey, 'hex')
-//   console.log('* got a connection from:', name, '*')
-//   conns.push(conn)
-//   conn.once('close', () => conns.splice(conns.indexOf(conn), 1))
-//   conn.on('data', data => console.log(`${name}: ${data}`))
-//   conn.on('error', e => console.log(`Connection error: ${e}`))
-// })
+const name = args[0] || 'a'
+let argAutobaseKey = args[1] || null
+const spam = 0
+const pace = 0
+const n = Math.max(1, Math.ceil(spam / 100))
 
-// const topicName = "some-common-topic-name"
+console.log('Pear config:', Pear.config)
+console.log('Using name:', name)
 
-// Hash the topic name to get a consistent 32-byte value
-// const topic = crypto.hash(b4a.from(topicName, 'utf-8'))
-// const discovery = swarm.join(topic, { client: true, server: true })
+const store = new Corestore('store/' + name)
+const localKey = await Autobase.getLocalKey(store)
 
-// The flushed promise will resolve when the topic has been fully announced to the DHT
-// discovery.flushed().then(() => {
-//   console.log('joined topic:', b4a.toString(topic, 'hex'))
-// })
-
-let nameString
-if (Pear.config.args[0]) {
-  nameString = Pear.config.args[0]
-  console.log('nameString:', nameString)
+let autobaseKey = argAutobaseKey
+// if you are alice then we will create the first Autobase key based on your name
+if (argAutobaseKey) {
+  autobaseKey = b4a.from(argAutobaseKey, 'hex')
+  console.log("You provided an autobase key, so we will use it:", b4a.toString(autobaseKey, 'hex'))
 } else {
-  console.log('no nameString provided')
-  // exit out of the application
-  process.exit(1)
+  // there is no key provided, so we will bootstrap autobase
+  // then you are the first writer and you create the key
+  console.log("You didn't provide a key, so we bootstrapped autobase for:", name)
+  console.log("This is your Autobase key:", b4a.toString(localKey, 'hex'))
+  autobaseKey = localKey
 }
 
-const store = new Corestore('store/' + nameString)
-
-const ns = await Autobase.getLocalKey(store)
-const sharedBaseKeyName = 'shared-base-key-test'
-const key = crypto.hash(b4a.from(sharedBaseKeyName, 'utf-8'))
-
-const base = new Autobase(store.namespace(ns), key, new View())
+const base = new Autobase(store.namespace(localKey), autobaseKey, new View())
 
 await base.ready()
-console.log('Base key', base.key.toString('hex'))
-console.log('Local key', base.local.key.toString('hex'))
 
 const swarm = new Hyperswarm({
   keyPair: base.local.keyPair
 })
+swarm.on('connection', c => base.replicate(c))
+swarm.join(base.discoveryKey)
 
-const conns = []
-swarm.on('connection', (conn) => {
-  const name = b4a.toString(conn.remotePublicKey, 'hex')
-  console.log('* got a connection from:', name, '*')
-  conns.push(conn)
-  conn.once('close', () => conns.splice(conns.indexOf(conn), 1))
-  // conn.on('data', data => console.log(`${name}: ${data}`))
-  conn.on('error', e => console.log(`Connection error: ${e}`))
-  base.replicate(conn)
-})
+Pear.teardown(() => swarm.destroy())
 
-const discovery = swarm.join(base.discoveryKey, { client: true, server: true })
-
-discovery.flushed().then(() => {
-  console.log('joined discovery:', b4a.toString(base.discoveryKey, 'hex'), 'with key', base.local.key.toString('hex'))
-})
-
-console.log('base.discoveryKey', base.discoveryKey.toString('hex'))
-console.log('base.local.key', base.local.key.toString('hex'))
+console.log('Base key', base.key.toString('hex'))
+console.log('Local key', base.local.key.toString('hex'))
+console.log()
 
 setInterval(async function () {
   console.log('base stats:',
@@ -139,9 +116,7 @@ if (base.writable) {
 async function onwritable () {
   console.log('we are writable!')
 
-  if (args.flags.add) {
-    await base.append(JSON.stringify({ add: args.flags.add }))
-  }
+  // await base.append(JSON.stringify({ add: flags.add }))
 
   if (pace) {
     while (true) {

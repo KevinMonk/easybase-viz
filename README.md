@@ -53,7 +53,7 @@ npm install
 
 3. Run the application:
 ```bash
-npm run dev
+pear run --dev . [name] [optional-autobase-key]
 ```
 
 This starts the application in development mode using Pear's runtime.
@@ -64,14 +64,14 @@ This starts the application in development mode using Pear's runtime.
 
 Run with a custom name:
 ```bash
-npm run dev -- --name "Alice"
+pear run --dev . alice
 ```
 
 ### Joining an Existing Autobase
 
 To join an existing autobase network, use the autobase key from another instance:
 ```bash
-npm run dev -- --name "Bob" --autobase-key "your-autobase-key-here"
+pear run --dev . bob 617c0c99e32b08f7dd8ef5df1e4084b811281896386e1a840c6aa825b4788d4b
 ```
 
 The autobase key is displayed in the console when the first instance starts.
@@ -80,14 +80,14 @@ The autobase key is displayed in the console when the first instance starts.
 
 1. Start the first instance:
 ```bash
-npm run dev -- --name "Alice"
+pear run --dev . alice
 ```
-Copy the autobase key from the console output.
+Look in the console for output like "This is your Autobase key: 617c0c99e32b08f7dd8ef5df1e4084b811281896386e1a840c6aa825b4788d4b"
 
 2. Start additional instances with the same autobase key:
 ```bash
-npm run dev -- --name "Bob" --autobase-key "copied-key-here"
-npm run dev -- --name "Charlie" --autobase-key "copied-key-here"
+pear run --dev . bob 617c0c99e32b08f7dd8ef5df1e4084b811281896386e1a840c6aa825b4788d4b
+pear run --dev . charlie 617c0c99e32b08f7dd8ef5df1e4084b811281896386e1a840c6aa825b4788d4b
 ```
 
 3. Send messages in any instance and observe:
@@ -132,9 +132,9 @@ Tests use the [Brittle](https://github.com/holepunchto/brittle) testing framewor
 
 ### Debugging
 
-Enable verbose logging for detailed operation tracking:
+Enable verbose logging by modifying the `VERBOSE_LOGGING` setting in `src/config.js` and then run:
 ```bash
-npm run dev -- --name "Debug" --verbose
+pear run --dev . debug
 ```
 
 ## Technical Implementation

@@ -4,7 +4,8 @@
       "WebFetch(domain:docs.pears.com)",
       "WebFetch(domain:github.com)",
       "Bash(npm install:*)",
-      "Bash(git submodule add:*)"
+      "Bash(git submodule add:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

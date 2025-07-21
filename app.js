@@ -12,14 +12,21 @@ class View {
   }
 
   async apply (nodes, view, host) {
+    console.log('Apply called with nodes:', nodes.length)
     for (const node of nodes) {
       const value = JSON.parse(node.value)
 
+      // DAG Entry Debug - show each operation in the MerkleDAG
+      const writerKey = node.from?.key?.toString('hex') || 'unknown'
+      const nodeIndex = node.length !== undefined ? node.length : 'unknown'
+      const dependencies = node.heads ? node.heads.length : 0
+      console.log(`DAG Entry - Writer: ${writerKey.slice(0,8)}... Index: ${nodeIndex} Dependencies: ${dependencies} Type: ${value?.message ? 'message' : value?.add ? 'add-writer' : value?.gets ? 'gets' : 'echo'}`)
+
       if (value.add) {
-        console.log('Processing add writer command for:', value.add)
+        if (VERBOSE_LOGGING) console.log('Processing add writer command for:', value.add)
         // Add as both writer AND indexer
         await host.addWriter(Buffer.from(value.add, 'hex'), { indexer: true })
-        console.log('Writer and indexer added successfully:', value.add)
+        if (VERBOSE_LOGGING) console.log('Writer and indexer added successfully:', value.add)
       }
 
       if (value.gets) {
@@ -45,6 +52,9 @@ class View {
     return view.close()
   }
 }
+
+// Configuration
+const VERBOSE_LOGGING = false // Toggle detailed console output
 
 // Parse Pear desktop app arguments
 // Usage examples:
@@ -95,14 +105,14 @@ await base.ready()
 
 // Listen for member events
 base.on('member-add', (key) => {
-  console.log('Member added event:', key.toString('hex'))
+  if (VERBOSE_LOGGING) console.log('Member added event:', key.toString('hex'))
   // Check if this is us becoming writable
   if (key.equals(base.local.key)) {
-    console.log('We just became a writer!')
+    if (VERBOSE_LOGGING) console.log('We just became a writer!')
     // Give it a moment then check writability
     setTimeout(() => {
       if (base.writable && !writableHandled) {
-        console.log('Becoming writable after member-add event!')
+        if (VERBOSE_LOGGING) console.log('Becoming writable after member-add event!')
         onwritable()
       }
     }, 500)
@@ -123,38 +133,38 @@ function displayMessage(value) {
   displayedMessages.add(messageKey)
   const messageEl = document.createElement('div')
   messageEl.className = 'message'
-  
+
   if (value.from === name) {
     messageEl.classList.add('own')
   }
-  
+
   const authorEl = document.createElement('div')
   authorEl.className = 'message-author'
   authorEl.textContent = value.from || 'Unknown'
-  
+
   const timeEl = document.createElement('span')
   timeEl.className = 'message-time'
   timeEl.textContent = new Date(value.time).toLocaleTimeString()
-  
+
   const contentEl = document.createElement('div')
   contentEl.textContent = value.message
-  
+
   authorEl.appendChild(timeEl)
   messageEl.appendChild(authorEl)
   messageEl.appendChild(contentEl)
-  
+
   messagesEl.appendChild(messageEl)
   messagesEl.scrollTop = messagesEl.scrollHeight
 }
 
 // Load existing messages
 async function loadExistingMessages() {
-  console.log('Loading existing messages, view length:', base.view.length)
+  if (VERBOSE_LOGGING) console.log('Loading existing messages, view length:', base.view.length)
   for (let i = 0; i < base.view.length; i++) {
     try {
       const data = await base.view.get(i)
       const value = JSON.parse(data)
-      
+
       if (value.echo && value.echo.message) {
         displayMessage(value.echo)
       }
@@ -171,11 +181,11 @@ setTimeout(loadExistingMessages, 1000)
 base.view.on('append', async () => {
   const seq = base.view.length - 1
   if (seq < 0) return
-  
+
   try {
     const data = await base.view.get(seq)
     const value = JSON.parse(data)
-    
+
     if (value.echo && value.echo.message) {
       displayMessage(value.echo)
     }
@@ -200,8 +210,8 @@ swarm.on('connection', c => {
       const message = JSON.parse(data.toString())
       if (message.type === 'exchange-key' && message.localKey) {
         const peerAutobaseKey = message.localKey
-        console.log('Received peer autobase key:', peerAutobaseKey)
-        
+        if (VERBOSE_LOGGING) console.log('Received peer autobase key:', peerAutobaseKey)
+
         // Only add if we're writable and peer isn't already a writer
         if (base.writable) {
           setTimeout(async () => {
@@ -211,19 +221,19 @@ swarm.on('connection', c => {
               if (w.core && w.core.key) return w.core.key.toString('hex')
               return null
             }).filter(Boolean)
-            
-            console.log('Current writers:', currentWriters.map(k => k.slice(0, 8) + '...'))
-            
+
+            if (VERBOSE_LOGGING) console.log('Current writers:', currentWriters.map(k => k.slice(0, 8) + '...'))
+
             if (!currentWriters.includes(peerAutobaseKey)) {
-              console.log('Auto-adding peer autobase key as writer:', peerAutobaseKey)
+              if (VERBOSE_LOGGING) console.log('Auto-adding peer autobase key as writer:', peerAutobaseKey)
               try {
                 await base.append(JSON.stringify({ add: peerAutobaseKey }))
-                console.log('Successfully sent add writer command for:', peerAutobaseKey)
+                if (VERBOSE_LOGGING) console.log('Successfully sent add writer command for:', peerAutobaseKey)
               } catch (err) {
                 console.error('Failed to add writer:', err)
               }
             } else {
-              console.log('Peer already a writer:', peerAutobaseKey)
+              if (VERBOSE_LOGGING) console.log('Peer already a writer:', peerAutobaseKey)
             }
           }, 1000)
         }
@@ -232,7 +242,7 @@ swarm.on('connection', c => {
       // Not a JSON message, ignore
     }
   })
-  
+
   // Send our autobase key to the peer
   setTimeout(() => {
     const keyExchange = JSON.stringify({
@@ -240,9 +250,9 @@ swarm.on('connection', c => {
       localKey: base.local.key.toString('hex')
     })
     c.write(keyExchange)
-    console.log('Sent our autobase key to peer')
+    if (VERBOSE_LOGGING) console.log('Sent our autobase key to peer')
   }, 500)
-  
+
   c.on('close', () => {
     connectedPeers--
     peerCountEl.textContent = `${connectedPeers} peer${connectedPeers !== 1 ? 's' : ''}`
@@ -250,7 +260,7 @@ swarm.on('connection', c => {
 })
 swarm.join(base.discoveryKey)
 
-console.log('Joining swarm with discovery key:', base.discoveryKey.toString('hex'))
+if (VERBOSE_LOGGING) console.log('Joining swarm with discovery key:', base.discoveryKey.toString('hex'))
 
 Pear.teardown(() => swarm.destroy())
 
@@ -259,64 +269,67 @@ console.log('Local key', base.local.key.toString('hex'))
 console.log('Is writable:', base.writable)
 console.log()
 
-setInterval(async function () {
-  console.log('base stats:',
-    'length=', base.length,
-    'indexed-length=', base.indexedLength,
-    'signed-length=', base.signedLength,
-    'members=', base._applyState.system.members, '(', base.linearizer.indexers.length, ')',
-    'peers=', base.core.peers.length,
-    'writable=', base.writable
-  )
-  
-  // Show current writers with more detail
-  console.log('Writers:', base.linearizer.indexers.map(w => {
-    if (!w) return 'null'
-    if (w.key) return w.key.toString('hex').slice(0, 8) + '...'
-    if (w.core && w.core.key) return w.core.key.toString('hex').slice(0, 8) + '...'
-    return 'unknown structure'
-  }))
-  
-  // Also check system members
-  if (base._applyState && base._applyState.system && base._applyState.system.members > base.linearizer.indexers.length) {
-    console.log('Note: System shows', base._applyState.system.members, 'members but only', base.linearizer.indexers.length, 'indexers')
-  }
-  
-  const seq = base.view.length - 1
-  if (seq < 0) return
-  const last = await base.view.get(seq)
-  console.log('last message (', seq, ') is', JSON.parse(last))
-}, 2000)
+// Show stats periodically when verbose logging is enabled
+if (VERBOSE_LOGGING) {
+  setInterval(async function () {
+    console.log('base stats:',
+      'length=', base.length,
+      'indexed-length=', base.indexedLength,
+      'signed-length=', base.signedLength,
+      'members=', base._applyState.system.members, '(', base.linearizer.indexers.length, ')',
+      'peers=', base.core.peers.length,
+      'writable=', base.writable
+    )
+
+    // Show current writers with more detail
+    console.log('Writers:', base.linearizer.indexers.map(w => {
+      if (!w) return 'null'
+      if (w.key) return w.key.toString('hex').slice(0, 8) + '...'
+      if (w.core && w.core.key) return w.core.key.toString('hex').slice(0, 8) + '...'
+      return 'unknown structure'
+    }))
+
+    // Also check system members
+    if (base._applyState && base._applyState.system && base._applyState.system.members > base.linearizer.indexers.length) {
+      console.log('Note: System shows', base._applyState.system.members, 'members but only', base.linearizer.indexers.length, 'indexers')
+    }
+
+    const seq = base.view.length - 1
+    if (seq < 0) return
+    const last = await base.view.get(seq)
+    console.log('last message (', seq, ') is', JSON.parse(last))
+  }, 2000)
+}
 
 // Define the onwritable function before using it
 let writableHandled = false
 async function onwritable () {
   if (writableHandled) return
   writableHandled = true
-  
-  console.log('we are writable!')
+
+  if (VERBOSE_LOGGING) console.log('we are writable!')
   statusEl.textContent = 'Connected'
   messageInput.disabled = false
   sendButton.disabled = false
-  
+
   // Send message function
   async function sendMessage() {
     const message = messageInput.value.trim()
     if (!message) return
-    
+
     await base.append(JSON.stringify({
       message,
       from: name,
       time: Date.now()
     }))
-    
+
     messageInput.value = ''
     // Don't display here - let the view append handler do it
   }
-  
+
   // Send on button click
   sendButton.addEventListener('click', sendMessage)
-  
+
   // Send on Enter key
   messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -330,14 +343,14 @@ async function onwritable () {
 if (base.writable) {
   await onwritable()
 } else {
-  console.log('waiting to become writable...')
+  if (VERBOSE_LOGGING) console.log('waiting to become writable...')
   statusEl.textContent = 'Waiting for write access...'
   base.once('writable', onwritable)
-  
+
   // Also check periodically in case the event is missed
   const checkWritable = setInterval(async () => {
     if (base.writable) {
-      console.log('Became writable!')
+      if (VERBOSE_LOGGING) console.log('Became writable!')
       clearInterval(checkWritable)
       onwritable()
     } else {
@@ -345,11 +358,11 @@ if (base.writable) {
       try {
         const members = base._applyState.system.members
         const indexers = base.linearizer.indexers.length
-        console.log(`Still not writable. Members: ${members}, Indexers: ${indexers}`)
-        
+        if (VERBOSE_LOGGING) console.log(`Still not writable. Members: ${members}, Indexers: ${indexers}`)
+
         // Force a check by updating base state
         await base.update()
-        
+
         // Also try updating the linearizer directly
         if (base.linearizer && base.linearizer.update) {
           try {

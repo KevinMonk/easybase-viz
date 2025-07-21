@@ -1,0 +1,3 @@
+[submodule "autobase"]
+	path = autobase
+	url = https://github.com/holepunchto/autobase.git

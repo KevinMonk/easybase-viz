@@ -87,6 +87,34 @@
       border-radius: 8px;
       margin-bottom: 10px;
       font-size: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    #base-key {
+      cursor: pointer;
+      background: rgba(71, 119, 188, 0.2);
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(71, 119, 188, 0.4);
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 12px;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    #base-key:hover {
+      background: rgba(71, 119, 188, 0.3);
+    }
+
+    #base-key:active {
+      background: rgba(71, 119, 188, 0.4);
+    }
+
+    .status-item {
+      white-space: nowrap;
     }
 
     #messages {
@@ -165,9 +193,13 @@
   <div id="main-container">
     <div id="chat-container">
       <div id="status">
-        <span id="user-name"></span> | 
-        <span id="connection-status">Connecting...</span> | 
-        <span id="peer-count">0 peers</span>
+        <span class="status-item" id="user-name"></span>
+        <span class="status-item">|</span>
+        <span class="status-item" id="connection-status">Connecting...</span>
+        <span class="status-item">|</span>
+        <span class="status-item" id="peer-count">0 peers</span>
+        <span class="status-item">|</span>
+        <span id="base-key" title="Click to copy">Key: ...</span>
       </div>
       <div id="messages"></div>
       <div id="input-container">

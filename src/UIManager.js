@@ -8,6 +8,7 @@ export default class UIManager {
     this.statusEl = document.getElementById('connection-status')
     this.userNameEl = document.getElementById('user-name')
     this.peerCountEl = document.getElementById('peer-count')
+    this.baseKeyEl = document.getElementById('base-key')
     this.messagesEl = document.getElementById('messages')
     this.messageInput = document.getElementById('message-input')
     this.sendButton = document.getElementById('send-button')
@@ -64,6 +65,36 @@ export default class UIManager {
   
   updatePeerCount(count) {
     this.peerCountEl.textContent = `${count} peer${count !== 1 ? 's' : ''}`
+  }
+  
+  updateBaseKey(baseKey) {
+    this.baseKeyEl.textContent = `Key: ${baseKey}`
+    this.baseKeyEl.title = 'Click to copy'
+    
+    // Add click to copy functionality
+    this.baseKeyEl.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(baseKey)
+        // Provide visual feedback
+        const originalText = this.baseKeyEl.textContent
+        const originalTitle = this.baseKeyEl.title
+        this.baseKeyEl.textContent = 'Copied!'
+        this.baseKeyEl.title = 'Key copied to clipboard'
+        
+        setTimeout(() => {
+          this.baseKeyEl.textContent = originalText
+          this.baseKeyEl.title = originalTitle
+        }, 1000)
+      } catch (err) {
+        console.error('Failed to copy to clipboard:', err)
+        // Fallback - select the text
+        const range = document.createRange()
+        range.selectNodeContents(this.baseKeyEl)
+        const selection = window.getSelection()
+        selection.removeAllRanges()
+        selection.addRange(range)
+      }
+    })
   }
   
   setWritable(isWritable = true) {
@@ -125,6 +156,7 @@ export default class UIManager {
       status: this.statusEl,
       userName: this.userNameEl,
       peerCount: this.peerCountEl,
+      baseKey: this.baseKeyEl,
       messages: this.messagesEl,
       messageInput: this.messageInput,
       sendButton: this.sendButton

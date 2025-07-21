@@ -74,7 +74,7 @@ To join an existing autobase network, use the autobase key from another instance
 pear run --dev . bob 617c0c99e32b08f7dd8ef5df1e4084b811281896386e1a840c6aa825b4788d4b
 ```
 
-The autobase key is displayed in the console when the first instance starts.
+The autobase key is displayed both in the console and in the UI status bar when the first instance starts. Click on the key in the UI to copy it to your clipboard.
 
 ### Multi-Instance Demo
 
@@ -82,7 +82,7 @@ The autobase key is displayed in the console when the first instance starts.
 ```bash
 pear run --dev . alice
 ```
-Look in the console for output like "This is your Autobase key: 617c0c99e32b08f7dd8ef5df1e4084b811281896386e1a840c6aa825b4788d4b"
+The autobase key will be displayed both in the console output and in the UI status bar. Look for "This is your Autobase key:" in the console or click on the "Key: ..." text in the UI to copy it to your clipboard.
 
 2. Start additional instances with the same autobase key:
 ```bash

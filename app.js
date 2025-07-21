@@ -74,6 +74,9 @@ class EasybaseVizApp {
     console.log('Base key', this.base.key.toString('hex'))
     console.log('Local key', this.base.local.key.toString('hex'))
     console.log('Is writable:', this.base.writable)
+    
+    // Update UI with base key
+    this.uiManager.updateBaseKey(this.base.key.toString('hex'))
   }
   
   setupNetworking() {

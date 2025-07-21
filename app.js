@@ -159,6 +159,10 @@ function displayMessage(value) {
 
 // Load existing messages
 async function loadExistingMessages() {
+  console.log('Loading existing messages, view length:', base.view.length)
+  const merkletree = await base.view.treeHash()
+  console.log('Merkle tree:', merkletree)
+  // debugger
   if (VERBOSE_LOGGING) console.log('Loading existing messages, view length:', base.view.length)
   for (let i = 0; i < base.view.length; i++) {
     try {

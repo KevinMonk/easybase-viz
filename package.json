@@ -6,8 +6,8 @@
     "type": "desktop",
     "gui": {
       "backgroundColor": "#1F2430",
-      "height": "540",
-      "width": "720"
+      "height": "800",
+      "width": "1400"
     }
   },
   "type": "module",
@@ -25,6 +25,7 @@
     "b4a": "^1.6.7",
     "bare-process": "^4.2.1",
     "corestore": "^7.4.5",
+    "d3": "^7.9.0",
     "hypercore-crypto": "^3.6.1",
     "hyperswarm": "^4.12.1"
   }

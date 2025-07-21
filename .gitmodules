@@ -1,3 +1,6 @@
 [submodule "autobase"]
 	path = autobase
 	url = https://github.com/holepunchto/autobase.git
+[submodule "hypercore"]
+	path = hypercore
+	url = https://github.com/holepunchto/hypercore.git

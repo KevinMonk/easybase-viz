@@ -41,15 +41,44 @@
       margin-left: 12px;
     }
 
+    #main-container {
+      display: flex;
+      height: calc(100vh - var(--title-bar-height));
+      width: 100%;
+    }
+
     #chat-container {
       display: flex;
       flex-direction: column;
-      height: calc(100vh - var(--title-bar-height));
-      max-width: 800px;
-      margin: 0 auto;
-      width: 100%;
+      height: 100%;
+      width: 50%;
       padding: 20px;
       box-sizing: border-box;
+      border-right: 1px solid rgba(55, 60, 72, 0.5);
+    }
+    
+    #dag-container {
+      width: 50%;
+      height: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    #dag-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #73D0FF;
+    }
+    
+    #dag-viewer {
+      flex: 1;
+      background: rgba(30, 33, 42, 0.5);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
     }
 
     #status {
@@ -133,16 +162,24 @@
 </head>
 <body>
   <div id="bar"><pear-ctrl></pear-ctrl></div>
-  <div id="chat-container">
-    <div id="status">
-      <span id="user-name"></span> | 
-      <span id="connection-status">Connecting...</span> | 
-      <span id="peer-count">0 peers</span>
+  <div id="main-container">
+    <div id="chat-container">
+      <div id="status">
+        <span id="user-name"></span> | 
+        <span id="connection-status">Connecting...</span> | 
+        <span id="peer-count">0 peers</span>
+      </div>
+      <div id="messages"></div>
+      <div id="input-container">
+        <input type="text" id="message-input" placeholder="Type a message..." disabled>
+        <button id="send-button" disabled>Send</button>
+      </div>
     </div>
-    <div id="messages"></div>
-    <div id="input-container">
-      <input type="text" id="message-input" placeholder="Type a message..." disabled>
-      <button id="send-button" disabled>Send</button>
+    <div id="dag-container">
+      <div id="dag-title">Autobase MerkleDAG Visualization</div>
+      <div id="dag-viewer">
+        <svg id="dag-svg" width="100%" height="100%"></svg>
+      </div>
     </div>
   </div>
 </body>
